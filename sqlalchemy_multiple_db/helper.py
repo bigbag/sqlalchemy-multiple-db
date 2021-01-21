@@ -2,11 +2,9 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from json import dumps, loads
-from typing import Any, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple, Union
 
 from sqlalchemy import create_engine
-from sqlalchemy.engine.url import make_url
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -22,45 +20,37 @@ class DBConfig:
     auto_flush: bool = False
     expire_on_commit: bool = False
     executemany_mode: str = ""
+    json_serializer: Callable = dumps
+    json_deserializer: Callable = loads
 
-    def get_dsn_as_dict(self) -> Dict[str, Any]:
-        conf_url = make_url(self.dsn)
-        return {
-            "username": conf_url.username,
-            "database": conf_url.database,
-            "port": conf_url.port,
-            "host": conf_url.host,
-            "password": conf_url.password,
-        }
+
+DEFAULT_DB_NAME = "default"
 
 
 @dataclass
-class DB:
-    config: DBConfig = field(init=False, repr=False)
-    session: Session = field(init=False, repr=False)
+class DBHelper:
+    sessions: Dict[str, Session] = field(init=False, repr=False)
+    config: Dict[str, DBConfig] = field(init=False, repr=False)
 
-    def __getattribute__(self, name):
+    def __getattribute__(self, db_name):
         try:
-            return object.__getattribute__(self, name)
+            return object.__getattribute__(self, db_name)
         except AttributeError as exc:
-            if name in ["config", "session"]:
-                print(f"DB: You need to call setup() for getting attribute {name}")
+            if db_name == "sessions":
+                print(f"DB: You need to call setup() for getting attribute {db_name}")
             raise exc
 
-    def setup(self, config: DBConfig):
-        logger.info("Init connection pool")
-
-        self.config = config
+    def create_scoped_session(self, config: DBConfig) -> Session:
         engine = create_engine(
             config.dsn,
             pool_size=config.pool_size,
             pool_pre_ping=config.pool_pre_ping,
             echo=config.echo,
-            json_serializer=dumps,
-            json_deserializer=loads,
+            json_serializer=config.json_serializer,
+            json_deserializer=config.json_deserializer,
             executemany_mode=config.executemany_mode or None,
         )
-        self.session = scoped_session(
+        session: Session = scoped_session(
             sessionmaker(
                 autocommit=config.auto_commit,
                 autoflush=config.auto_flush,
@@ -68,38 +58,54 @@ class DB:
                 bind=engine,
             )
         )
+        return session
+
+    def setup(self, config: Union[DBConfig, Dict[str, DBConfig]]):
+        if isinstance(config, DBConfig):
+            config = {self.DEFAULT_DB_NAME: config}
+
+        self.config = config
+
+        for db_name, cfg in config.items():
+            self.sessions[db_name] = self.create_scoped_session(cfg)
 
     def shutdown(self):
-        logger.info("Shutdown connection pool")
-        self.session.remove()
+        for session in self.sessions.values():
+            session.remove()
 
     @contextmanager
-    def session_scope(self):
-        yield self.session
-        self.session.close()
-
-    def get_status_info(self) -> Tuple[Dict[str, Any], bool]:
-        status = True
-        session = self.session()
+    def session_scope(self, db_name: str = DEFAULT_DB_NAME):
+        session = db.sessions[db_name]
         try:
-            session.execute("select version();")
-        except Exception as e:
-            status &= False
-            logger.exception(e)
+            yield session
         finally:
             session.close()
 
-        return {"status": "OK"} if status else {"status": "FAILED"}, status
+    def get_status_info(self) -> Tuple[Dict[str, Any], bool]:
+        full_status = True
+        full_status_info = {}
+
+        for db_name, session in self.sessions.items():
+            status = True
+            try:
+                session.execute("select version();")
+            except Exception as e:
+                status &= False
+                full_status &= False
+                logger.exception(e)
+            finally:
+                session.close()
+
+            full_status_info[db_name] = {"status": "OK"} if status else {"status": "FAILED"}, status
+
+        return full_status_info, full_status
 
 
-db = DB()
+db = DBHelper()
 
 
-BaseModel = declarative_base()
-
-
-def get_session():
-    session = db.session
+def get_session(db_name: str = DEFAULT_DB_NAME):
+    session = db.sessions[db_name]
     try:
         yield session
     finally:
