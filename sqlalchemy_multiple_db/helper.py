@@ -2,7 +2,7 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from json import dumps, loads
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
@@ -10,21 +10,31 @@ from sqlalchemy.orm import Session, scoped_session, sessionmaker
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_DB_NAME = "default"
+DEFAULT_SESSION_OPTIONS = {"auto_commit": False, "auto_flush": False, "expire_on_commit": False}
+DEFAULT_ENGINE_OPTIONS = {
+    "pool_size": 50,
+    "pool_pre_ping": True,
+    "echo": False,
+    "json_serializer": dumps,
+    "json_deserializer": loads,
+}
+
+
 @dataclass
 class DBConfig:
     dsn: str
-    pool_size: int = 50
-    pool_pre_ping: bool = True
-    echo: bool = False
-    auto_commit: bool = False
-    auto_flush: bool = False
-    expire_on_commit: bool = False
-    executemany_mode: str = ""
-    json_serializer: Callable = dumps
-    json_deserializer: Callable = loads
+    session_options: Optional[Dict[str, Any]] = None
+    engine_options: Optional[Dict[str, Any]] = None
 
+    def __post_init__(self):
+        session_options = DEFAULT_SESSION_OPTIONS
+        session_options.update(self.session_options or {})
+        self.session_options = session_options
 
-DEFAULT_DB_NAME = "default"
+        engine_options = DEFAULT_ENGINE_OPTIONS
+        engine_options.update(self.engine_options or {})
+        self.engine_options = engine_options
 
 
 @dataclass
@@ -36,36 +46,25 @@ class DBHelper:
         try:
             return object.__getattribute__(self, db_name)
         except AttributeError as exc:
-            if db_name == "sessions":
+            if db_name in ["sessions", "config"]:
                 print(f"DB: You need to call setup() for getting attribute {db_name}")
             raise exc
 
     def create_scoped_session(self, config: DBConfig) -> Session:
-        engine = create_engine(
-            config.dsn,
-            pool_size=config.pool_size,
-            pool_pre_ping=config.pool_pre_ping,
-            echo=config.echo,
-            json_serializer=config.json_serializer,
-            json_deserializer=config.json_deserializer,
-            executemany_mode=config.executemany_mode or None,
-        )
-        session: Session = scoped_session(
+        session: scoped_session = scoped_session(
             sessionmaker(
-                autocommit=config.auto_commit,
-                autoflush=config.auto_flush,
-                expire_on_commit=config.expire_on_commit,
-                bind=engine,
+                bind=create_engine(config.dsn, **config.engine_options), **config.session_options
             )
         )
         return session
 
     def setup(self, config: Union[DBConfig, Dict[str, DBConfig]]):
         if isinstance(config, DBConfig):
-            config = {self.DEFAULT_DB_NAME: config}
+            config = {DEFAULT_DB_NAME: config}
 
         self.config = config
 
+        self.sessions = {}
         for db_name, cfg in config.items():
             self.sessions[db_name] = self.create_scoped_session(cfg)
 

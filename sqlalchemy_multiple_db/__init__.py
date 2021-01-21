@@ -1,3 +1,3 @@
-from .helper import DBConfig, DBHelper
+from .helper import DBConfig, DBHelper, db
 
-__all__ = ["DBConfig", "DBHelper"]
+__all__ = ["DBConfig", "DBHelper", "db"]
