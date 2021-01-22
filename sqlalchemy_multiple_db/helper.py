@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_DB_NAME = "default"
-DEFAULT_SESSION_OPTIONS = {"auto_commit": False, "auto_flush": False, "expire_on_commit": False}
+DEFAULT_SESSION_OPTIONS = {"autocommit": False, "autoflush": False, "expire_on_commit": False}
 DEFAULT_ENGINE_OPTIONS = {
     "pool_size": 50,
     "pool_pre_ping": True,
@@ -87,7 +87,7 @@ class DBHelper:
         for db_name, session in self.sessions.items():
             status = True
             try:
-                session.execute("select version();")
+                session.execute("select 1;")
             except Exception as e:
                 status &= False
                 full_status &= False
@@ -95,17 +95,9 @@ class DBHelper:
             finally:
                 session.close()
 
-            full_status_info[db_name] = {"status": "OK"} if status else {"status": "FAILED"}, status
+            full_status_info[db_name] = {"status": "OK"} if status else {"status": "FAILED"}
 
         return full_status_info, full_status
 
 
 db = DBHelper()
-
-
-def get_session(db_name: str = DEFAULT_DB_NAME):
-    session = db.sessions[db_name]
-    try:
-        yield session
-    finally:
-        session.close()
