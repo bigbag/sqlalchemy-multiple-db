@@ -18,9 +18,9 @@ lint:
 	@exec flake8 sqlalchemy_multiple_db tests
 	@echo "Run bandit"
 	@exec bandit -r sqlalchemy_multiple_db/*
-# 	@echo "Run mypy"
-# 	@exec mypy sqlalchemy_multiple_db
-# 	@exec rm -rf .mypy_cache
+	@echo "Run mypy"
+	@exec mypy sqlalchemy_multiple_db
+	@exec rm -rf .mypy_cache
 
 .PHONY: test
 test:
