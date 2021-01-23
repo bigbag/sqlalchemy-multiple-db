@@ -20,9 +20,6 @@ Use pip to install:
 Basic Usage
 -----------
 
-.. code:: python
-
-
 
 License
 -------
