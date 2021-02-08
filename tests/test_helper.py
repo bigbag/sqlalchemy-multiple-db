@@ -19,6 +19,8 @@ def test_with_one_db():
     with db.session_scope() as session:
         assert session.execute("select 1;")
 
+    db.shutdown()
+
 
 def test_with__multiple_db():
     db.setup({"test1": DBConfig(dsn="sqlite://"), "test2": DBConfig(dsn="sqlite://")})
