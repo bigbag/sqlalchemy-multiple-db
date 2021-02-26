@@ -1,6 +1,7 @@
 # sqlalchemy-multiple-db
 
 [![CI](https://github.com/bigbag/sqlalchemy-multiple-db/workflows/CI/badge.svg)](https://github.com/bigbag/sqlalchemy-multiple-db/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/bigbag/sqlalchemy-multiple-db/branch/main/graph/badge.svg)](https://codecov.io/gh/bigbag/sqlalchemy-multiple-db)
 [![pypi](https://img.shields.io/pypi/v/sqlalchemy-multiple-db.svg)](https://pypi.python.org/pypi/sqlalchemy-multiple-db)
 [![downloads](https://img.shields.io/pypi/dm/sqlalchemy-multiple-db.svg)](https://pypistats.org/packages/sqlalchemy-multiple-db)
 [![versions](https://img.shields.io/pypi/pyversions/sqlalchemy-multiple-db.svg)](https://github.com/bigbag/sqlalchemy-multiple-db)
