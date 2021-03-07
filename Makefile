@@ -8,6 +8,20 @@ tag:
 	@git push origin $(name);
 	@git push origin main
 
+.PHONY: check
+check:
+	@echo "Run isort"
+	@exec isort --check-only .
+	@echo "Run black"
+	@exec black --check --diff sqlalchemy_multiple_db tests
+	@echo "Run flake"
+	@exec flake8 sqlalchemy_multiple_db tests
+	@echo "Run bandit"
+	@exec bandit -r sqlalchemy_multiple_db/*
+	@echo "Run mypy"
+	@exec mypy sqlalchemy_multiple_db
+	@exec rm -rf .mypy_cache
+	
 .PHONY: lint
 lint:
 	@echo "Run isort"
