@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
+from sqlalchemy.sql import text
 
 logger = logging.getLogger(__name__)
 
@@ -51,12 +52,13 @@ class DBHelper:
             raise exc
 
     def create_scoped_session(self, config: DBConfig) -> Session:
-        session: scoped_session = scoped_session(
-            sessionmaker(
-                bind=create_engine(config.dsn, **config.engine_options), **config.session_options
-            )
+        engine_options = config.engine_options or {}
+        session_options = config.session_options or {}
+
+        session = scoped_session(
+            sessionmaker(bind=create_engine(config.dsn, **engine_options), **session_options)
         )
-        return session
+        return session  # type: ignore
 
     def setup(self, config: Union[DBConfig, Dict[str, DBConfig]]):
         if isinstance(config, DBConfig):
@@ -87,7 +89,7 @@ class DBHelper:
         for db_name, session in self.sessions.items():
             status = True
             try:
-                session.execute("select 1;")
+                session.execute(text("select 1;"))
             except Exception as e:
                 status &= False
                 full_status &= False
