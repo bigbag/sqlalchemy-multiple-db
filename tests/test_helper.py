@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy.orm import scoped_session
+from sqlalchemy.sql import text
 
 from sqlalchemy_multiple_db import DBConfig, db
 
@@ -17,7 +18,7 @@ def test_with_one_db():
     assert isinstance(db.sessions["default"], scoped_session)
 
     with db.session_scope() as session:
-        assert session.execute("select 1;")
+        assert session.execute(text("select 1;"))
 
     db.shutdown()
 
@@ -32,10 +33,10 @@ def test_with__multiple_db():
     assert isinstance(db.sessions["test2"], scoped_session)
 
     with db.session_scope("test1") as session:
-        assert session.execute("select 1;")
+        assert session.execute(text("select 1;"))
 
     with db.session_scope("test2") as session:
-        assert session.execute("select 1;")
+        assert session.execute(text("select 1;"))
 
     db.shutdown()
 

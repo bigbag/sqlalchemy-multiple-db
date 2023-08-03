@@ -22,7 +22,7 @@ check:
 	@exec mypy sqlalchemy_multiple_db
 	@exec rm -rf .mypy_cache
 	
-.PHONY: lint
+.PHONY: lint 
 lint:
 	@echo "Run isort"
 	@exec isort .
