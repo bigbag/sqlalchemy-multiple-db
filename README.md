@@ -10,7 +10,7 @@
 **sqlalchemy-multiple-db** helper for easily connect to multiple databases.
 
 
-* [Project Changelog](CHANGELOG.md)
+* [Project Changelog](https://github.com/bigbag/sqlalchemy-multiple-db/blob/main/CHANGELOG.md)
 
 ## Installation
 
