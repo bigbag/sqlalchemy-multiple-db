@@ -10,6 +10,8 @@
 **sqlalchemy-multiple-db** helper for easily connect to multiple databases.
 
 
+* [Project Changelog](CHANGELOG.md)
+
 ## Installation
 
 sqlalchemy-multiple-db is available on PyPI.

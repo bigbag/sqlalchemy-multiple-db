@@ -1,8 +1,9 @@
-import pytest
-from sqlalchemy.orm import scoped_session
-from sqlalchemy.sql import text
+from unittest.mock import MagicMock
 
-from sqlalchemy_multiple_db import DBConfig, db
+import pytest
+from sqlalchemy.exc import SQLAlchemyError
+
+from sqlalchemy_multiple_db import DEFAULT_DB_NAME, DBConfig, DBHelper, db
 
 
 def test_get_session_without_setup():
@@ -10,44 +11,73 @@ def test_get_session_without_setup():
         db.sessions
 
 
-def test_with_one_db():
-    db.setup(DBConfig(dsn="sqlite://"))
-
-    assert "default" in db.sessions
-    assert len(db.sessions) == 1
-    assert isinstance(db.sessions["default"], scoped_session)
-
-    with db.session_scope() as session:
-        assert session.execute(text("select 1;"))
-
-    db.shutdown()
+@pytest.fixture
+def db_helper():
+    helper = DBHelper()
+    config = {DEFAULT_DB_NAME: DBConfig(dsn="sqlite:///:memory:")}
+    helper.setup(config)
+    return helper
 
 
-def test_with__multiple_db():
-    db.setup({"test1": DBConfig(dsn="sqlite://"), "test2": DBConfig(dsn="sqlite://")})
+def test_session_scope_successful_transaction(db_helper):
+    mock_session = MagicMock()
+    mock_session_instance = MagicMock()
+    mock_session.return_value = mock_session_instance
+    db_helper.sessions = {DEFAULT_DB_NAME: mock_session}
 
-    assert "test1" in db.sessions
-    assert "test2" in db.sessions
-    assert len(db.sessions) == 2
-    assert isinstance(db.sessions["test1"], scoped_session)
-    assert isinstance(db.sessions["test2"], scoped_session)
+    with db_helper.session_scope() as session:
+        assert session == mock_session_instance
 
-    with db.session_scope("test1") as session:
-        assert session.execute(text("select 1;"))
+    mock_session.assert_called_once()
+    mock_session.remove.assert_called_once()
 
-    with db.session_scope("test2") as session:
-        assert session.execute(text("select 1;"))
 
-    db.shutdown()
+def test_session_scope_with_exception(db_helper):
+    mock_session = MagicMock()
+    mock_session_instance = MagicMock()
+    mock_session.return_value = mock_session_instance
+    db_helper.sessions = {DEFAULT_DB_NAME: mock_session}
+
+    with pytest.raises(ValueError):
+        with db_helper.session_scope():
+            raise ValueError("Test exception")
+
+    mock_session.assert_called_once()
+    mock_session.remove.assert_called_once()
+
+
+def test_session_scope_with_non_default_db(db_helper):
+    custom_db = "custom_db"
+    mock_session = MagicMock()
+    mock_session_instance = MagicMock()
+    mock_session.return_value = mock_session_instance
+    db_helper.sessions = {custom_db: mock_session}
+
+    with db_helper.session_scope(db_name=custom_db) as session:
+        assert session == mock_session_instance
+
+    mock_session.assert_called_once()
+    mock_session.remove.assert_called_once()
+
+
+def test_session_scope_with_invalid_db_name(db_helper):
+    invalid_db = "invalid_db"
+
+    with pytest.raises(ValueError, match=f"No session found for database: {invalid_db}"):
+        with db_helper.session_scope(db_name=invalid_db):
+            pass
 
 
 class TestGetStatusInfo:
     def test_error(self):
         class MockSession:
             def execute(self, *args, **kwargs):
-                raise Exception()
+                raise SQLAlchemyError()
 
             def close(self, *args, **kwargs):
+                pass
+
+            def remove(self, *args, **kwargs):
                 pass
 
         db.sessions = {"default": MockSession()}

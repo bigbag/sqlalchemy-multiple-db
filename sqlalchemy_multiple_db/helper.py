@@ -2,9 +2,10 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from json import dumps, loads
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Generator, Tuple, Union
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.sql import text
 
@@ -25,22 +26,17 @@ DEFAULT_ENGINE_OPTIONS = {
 @dataclass
 class DBConfig:
     dsn: str
-    session_options: Optional[Dict[str, Any]] = None
-    engine_options: Optional[Dict[str, Any]] = None
+    session_options: Dict[str, Any] = field(default_factory=dict)
+    engine_options: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        session_options = DEFAULT_SESSION_OPTIONS
-        session_options.update(self.session_options or {})
-        self.session_options = session_options
-
-        engine_options = DEFAULT_ENGINE_OPTIONS
-        engine_options.update(self.engine_options or {})
-        self.engine_options = engine_options
+        self.session_options = {**DEFAULT_SESSION_OPTIONS, **self.session_options}
+        self.engine_options = {**DEFAULT_ENGINE_OPTIONS, **self.engine_options}
 
 
 @dataclass
 class DBHelper:
-    sessions: Dict[str, Session] = field(init=False, repr=False)
+    sessions: Dict[str, scoped_session] = field(init=False, repr=False)
     config: Dict[str, DBConfig] = field(init=False, repr=False)
 
     def __getattribute__(self, db_name):
@@ -51,7 +47,7 @@ class DBHelper:
                 print(f"DB: You need to call setup() for getting attribute {db_name}")
             raise exc
 
-    def create_scoped_session(self, config: DBConfig) -> Session:
+    def create_scoped_session(self, config: DBConfig) -> scoped_session:
         engine_options = config.engine_options or {}
         session_options = config.session_options or {}
 
@@ -70,32 +66,38 @@ class DBHelper:
         for db_name, cfg in config.items():
             self.sessions[db_name] = self.create_scoped_session(cfg)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         for session in self.sessions.values():
             session.remove()
+        self.sessions.clear()
 
     @contextmanager
-    def session_scope(self, db_name: str = DEFAULT_DB_NAME):
-        session = db.sessions[db_name]
+    def session_scope(self, db_name: str = DEFAULT_DB_NAME) -> Generator[Session, None, None]:
+        session = self.sessions.get(db_name)
+        if not session:
+            raise ValueError(f"No session found for database: {db_name}")
         try:
-            yield session
+            yield session()
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
         finally:
-            session.close()
+            session.remove()
 
-    def get_status_info(self) -> Tuple[Dict[str, Any], bool]:
+    def get_status_info(self) -> Tuple[Dict[str, Dict[str, str]], bool]:
         full_status = True
         full_status_info = {}
-
         for db_name, session in self.sessions.items():
             status = True
             try:
-                session.execute(text("select 1;"))
-            except Exception as e:
+                session.execute(text("SELECT 1"))
+            except SQLAlchemyError as e:
+                logger.exception(f"Database {db_name} connection failed: {e}")
                 status &= False
                 full_status &= False
-                logger.exception(e)
             finally:
-                session.close()
+                session.remove()
 
             full_status_info[db_name] = {"status": "OK"} if status else {"status": "FAILED"}
 
