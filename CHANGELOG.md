@@ -1,112 +1,108 @@
-
 # Changelog
 
-## 3.0.0 (Unreleased)
+## Unreleased
 
-### Breaking changes
+* Update changelog [Pavel Liashkov]
 
-- Dropped Python 3.7–3.10; supported versions are Python 3.11–3.14.
-- Dropped SQLAlchemy 1.x and require SQLAlchemy 2.x.
-- Replaced `DBConfig`, `DBHelper`, global `db`, `setup`, `session_scope`, `get_status_info`, and `shutdown` with `DatabaseConfig` and explicit `DatabaseManager` lifecycle methods.
-- Removed the implicit default database and `scoped_session` usage.
-- Moved packaging and dependency management to uv, `pyproject.toml`, and `uv.lock`.
+## 3.0.0 (2026-07-20)
+
+* feat: modernize SQLAlchemy multi-database library [Pavel Liashkov]
+
+## 2.1.1 (2024-10-18)
+
+* Update changelog [Pavel Liashkov]
+* Fix url in README [Pavel Liashkov]
 
 ## 2.1.0 (2024-10-18)
 
-*  Update pipeline [Pavel Liashkov]
-*  Update version [Pavel Liashkov]
-
+* Update pipeline [Pavel Liashkov]
+* Update version [Pavel Liashkov]
 
 ## 2.0.0 (2023-08-03)
 
-*  Update sqlalchemy requirement from <1.5,>=1.4 to >=1.4,<2.1 [dependabot[bot]]
-*  Fix pipeline (#27) [Pavel Liashkov]
-*  Update version [Pavel Liashkov]
-
+* Update sqlalchemy requirement from <1.5,>=1.4 to >=1.4,<2.1 [dependabot[bot]]
+* Fix pipeline (#27) [Pavel Liashkov]
+* Update version [Pavel Liashkov]
 
 ## 1.8.0 (2021-07-26)
 
-*  Relax reqs version [Pavel Liashkov]
-
+* Relax reqs version [Pavel Liashkov]
 
 ## 1.7.0 (2021-07-23)
 
-*  Bump sqlalchemy from 1.4.18 to 1.4.19 [dependabot[bot]]
-*  Bump sqlalchemy from 1.4.19 to 1.4.20 [dependabot[bot]]
-*  Bump sqlalchemy from 1.4.20 to 1.4.22 [dependabot[bot]]
-*  Update version.py [Pavel Liashkov]
-
+* Bump sqlalchemy from 1.4.18 to 1.4.19 [dependabot[bot]]
+* Bump sqlalchemy from 1.4.19 to 1.4.20 [dependabot[bot]]
+* Bump sqlalchemy from 1.4.20 to 1.4.22 [dependabot[bot]]
+* Update version.py [Pavel Liashkov]
 
 ## 1.6.0 (2021-06-18)
 
-*  Bump sqlalchemy from 1.4.17 to 1.4.18 [dependabot[bot]]
-*  Update version.py [Pavel Liashkov]
-
+* Bump sqlalchemy from 1.4.17 to 1.4.18 [dependabot[bot]]
+* Update version.py [Pavel Liashkov]
 
 ## 1.5.0 (2021-06-04)
 
-*  Bump sqlalchemy from 1.4.15 to 1.4.17 [dependabot[bot]]
-*  Update version.py [Pavel Liashkov]
-
+* Bump sqlalchemy from 1.4.15 to 1.4.17 [dependabot[bot]]
+* Update version.py [Pavel Liashkov]
 
 ## 1.4.0 (2021-05-18)
 
-*  Bump sqlalchemy from 1.4.13 to 1.4.15 [dependabot[bot]]
-*  Update version.py [Pavel Liashkov]
-
+* Bump sqlalchemy from 1.4.13 to 1.4.15 [dependabot[bot]]
+* Update version.py [Pavel Liashkov]
 
 ## 1.3.0 (2021-05-05)
 
-*  Bump sqlalchemy from 1.4.8 to 1.4.13 [dependabot[bot]]
-*  Update version.py [Pavel Liashkov]
-
+* Bump sqlalchemy from 1.4.8 to 1.4.13 [dependabot[bot]]
+* Update version.py [Pavel Liashkov]
 
 ## 1.2.0 (2021-04-16)
 
-*  Bump sqlalchemy from 1.4.5 to 1.4.8 [dependabot[bot]]
-*  Update version.py [Pavel Liashkov]
-
+* Bump sqlalchemy from 1.4.5 to 1.4.8 [dependabot[bot]]
+* Update version.py [Pavel Liashkov]
 
 ## 1.1.0 (2021-04-05)
 
-*  Bump sqlalchemy from 1.4.0 to 1.4.2 [dependabot[bot]]
-*  Bump sqlalchemy from 1.4.2 to 1.4.5 [dependabot[bot]]
-*  Bump version [Pavel Liashkov]
-
+* Bump sqlalchemy from 1.4.0 to 1.4.2 [dependabot[bot]]
+* Bump sqlalchemy from 1.4.2 to 1.4.5 [dependabot[bot]]
+* Bump version [Pavel Liashkov]
 
 ## 1.0.0 (2021-03-17)
 
-*  Add command for checking code [Pavel Liashkov]
-*  Bump sqlalchemy from 1.3.23 to 1.4.0 [dependabot[bot]]
-*  NOTASK: Bump version [Pavel Liashkov]
-*  Bump version [Pavel Liashkov]
-
+* Add command for checking code [Pavel Liashkov]
+* Bump sqlalchemy from 1.3.23 to 1.4.0 [dependabot[bot]]
+* NOTASK: Bump version [Pavel Liashkov]
+* Bump version [Pavel Liashkov]
 
 ## 0.1.6 (2021-02-26)
 
-*  Add codecov settings [Pavel Liashkov]
-
+* Add codecov settings [Pavel Liashkov]
 
 ## 0.1.5 (2021-02-20)
 
-*  Update Makefile [Pavel Liashkov]
-*  Bump version [Pavel Liashkov]
-
+* Update Makefile [Pavel Liashkov]
+* Bump version [Pavel Liashkov]
 
 ## 0.1.4 (2021-02-08)
 
-*  Update readme [Pavel Liashkov]
-
+* Update readme [Pavel Liashkov]
 
 ## 0.1.3 (2021-02-02)
 
-*  Bump sqlalchemy from 1.3.22 to 1.3.23 [dependabot[bot]]
-*  Bump version [Pavel Liashkov]
-
+* Bump sqlalchemy from 1.3.22 to 1.3.23 [dependabot[bot]]
+* Bump version [Pavel Liashkov]
 
 ## 0.1.2 (2021-01-23)
 
-*  Fix Readme [Pavel Liashkov]
-*  Bump version [Pavel Liashkov]
-*  Fix package format [Pavel Liashkov]
+* Fix Readme [Pavel Liashkov]
+* Bump version [Pavel Liashkov]
+* Fix package format [Pavel Liashkov]
+
+## 0.1.0 (2021-01-22)
+
+* Add base [Pavel Liashkov]
+* Add helper [Pavel Liashkov]
+* Add support for multiple db [Pavel Liashkov]
+* Fix DBConfig [Pavel Liashkov]
+* Purge debug code [Pavel Liashkov]
+* Add helper tests [Pavel Liashkov]
 
