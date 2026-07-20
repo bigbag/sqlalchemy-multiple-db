@@ -1,4 +1,15 @@
 
+# Changelog
+
+## 3.0.0 (Unreleased)
+
+### Breaking changes
+
+- Dropped Python 3.7–3.10; supported versions are Python 3.11–3.14.
+- Dropped SQLAlchemy 1.x and require SQLAlchemy 2.x.
+- Replaced `DBConfig`, `DBHelper`, global `db`, `setup`, `session_scope`, `get_status_info`, and `shutdown` with `DatabaseConfig` and explicit `DatabaseManager` lifecycle methods.
+- Removed the implicit default database and `scoped_session` usage.
+- Moved packaging and dependency management to uv, `pyproject.toml`, and `uv.lock`.
 
 ## 2.1.0 (2024-10-18)
 

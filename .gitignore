@@ -63,8 +63,12 @@ target/
 .ipynb_checkpoints
 venv/*
 env/*
-.venv/*
+.venv/
 .env/*
+.uv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
 
 address.txt
 private_keys.txt

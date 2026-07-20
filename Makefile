@@ -1,109 +1,109 @@
-.PHONY: sys/changelog
-## Generating changelog file
-sys/changelog:
-	@echo "Generating CHANGELOG.md..."
-	@echo "" > CHANGELOG.md;
-	@previous_tag=0; \
-	for current_tag in $$(git tag --sort=-creatordate); do \
-		if [ "$$previous_tag" != 0 ]; then \
-			tag_date=$$(git log -1 --pretty=format:'%ad' --date=short $${previous_tag}); \
-			printf "\n## $${previous_tag} ($${tag_date})\n\n" >> CHANGELOG.md; \
-			git log $${current_tag}...$${previous_tag} --pretty=format:'*  %s [%an]' --reverse | grep -v Merge >> CHANGELOG.md; \
-			printf "\n" >> CHANGELOG.md; \
-		fi; \
-		previous_tag=$${current_tag}; \
-	done
-	@echo "CHANGELOG.md generated successfully."
+.PHONY: help
 
-.PHONY: sys/tag
-## Create and push tag
-sys/tag:
-	@read -p "Enter tag version (e.g., 1.0.0): " TAG; \
-	if [[ $$TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then \
-		git tag -a $$TAG -m $$TAG; \
-		git push origin $$TAG; \
-		echo "Tag $$TAG created and pushed successfully."; \
-	else \
-		echo "Invalid tag format. Please use X.Y.Z (e.g., 1.0.0)"; \
-		exit 1; \
-	fi
+#################################################################################
+# GLOBALS                                                                       #
+#################################################################################
 
-.PHONY: venv/install
-## Install dev and lint dependencies
-venv/install:
-	@echo "install virtual environment..."
-	@exec python -m pip install --upgrade pip
-	@exec pip install --no-cache-dir -e .
-	@exec pip install --no-cache-dir -r requirements/linters.txt
-	@exec pip install --no-cache-dir -r requirements/tests.txt
-	@exec make dev/clean
+PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+PROJECT_NAME = sqlalchemy-multiple-db
 
-.PHONY: dev/lint
-## Running all linters
-dev/lint:
-	@echo "Run isort"
-	@exec isort .
-	@echo "Run black"
-	@exec black sqlalchemy_multiple_db tests
-	@echo "Run flake"
-	@exec flake8 sqlalchemy_multiple_db tests
-	@echo "Run bandit"
-	@exec bandit -r sqlalchemy_multiple_db/*
-	@echo "Run mypy"
-	@exec mypy sqlalchemy_multiple_db
-	@exec rm -rf .mypy_cache
+SRC_PATH = src/sqlalchemy_multiple_db
+LINT_PATHS = src tests
 
-.PHONY: dev/test
-## Run all tests
-dev/test:
-	@echo "Run tests"
-	PYTHONPATH=${PYTHONPATH} PYTHONASYNCIODEBUG=x py.test -svvv -rs --cov sqlalchemy_multiple_db --cov-report term-missing -x
-	@exec rm -rf .pytest_cache
+UV ?= uv
 
-.PHONY: dev/clean
-## Clear temp files
-dev/clean:
-	@echo "Clear temp files"
-	@rm -rf `find . -name __pycache__`
-	@rm -rf `find . -type f -name '*.py[co]' `
-	@rm -rf `find . -type f -name '*~' `
-	@rm -rf `find . -type f -name '.*~' `
-	@rm -rf `find . -type f -name '@*' `
-	@rm -rf `find . -type f -name '#*#' `
-	@rm -rf `find . -type f -name '*.orig' `
-	@rm -rf `find . -type f -name '*.rej' `
-	@rm -rf .coverage
-	@rm -rf coverage.html
-	@rm -rf coverage.xml
-	@rm -rf htmlcov
-	@rm -rf build
-	@rm -rf cover
-	@python setup.py clean
-	@rm -rf .develop
-	@rm -rf .flake
-	@rm -rf .install-deps
-	@rm -rf *.egg-info
-	@rm -rf .pytest_cache
-	@rm -rf dist
+#################################################################################
+# VIRTUAL ENVIRONMENT                                                           #
+#################################################################################
+
+.PHONY: venv/install/main
+## Install runtime dependencies
+venv/install/main:
+	@echo "Installing runtime dependencies..."
+	$(UV) sync --no-group dev
+	@echo "done"
+	@echo
+
+.PHONY: venv/install/all
+## Install runtime and development dependencies
+venv/install/all:
+	@echo "Installing runtime and development dependencies..."
+	$(UV) sync --all-groups
+	@echo "done"
+	@echo
+
+#################################################################################
+# COMMANDS                                                                      #
+#################################################################################
+
+########################################
+### Code style and static analysis
+########################################
+
+.PHONY: lint/ruff
+## Check formatting and linting with Ruff
+lint/ruff:
+	@echo "Linting with Ruff..."
+	$(UV) run ruff format --check $(LINT_PATHS)
+	$(UV) run ruff check $(LINT_PATHS)
+	@echo "done"
+	@echo
+
+.PHONY: lint/mypy
+## Type-check source with mypy
+lint/mypy:
+	@echo "Type-checking with mypy..."
+	$(UV) run mypy $(SRC_PATH)
+	@echo "done"
+	@echo
+
+.PHONY: lint
+## Run all static checks
+lint: lint/ruff lint/mypy
+
+.PHONY: format
+## Format source code and apply safe lint fixes
+format:
+	@echo "Formatting source code..."
+	$(UV) run ruff format $(LINT_PATHS)
+	$(UV) run ruff check --fix $(LINT_PATHS)
+	@echo "done"
+	@echo
+
+.PHONY: clean
+## Delete generated build artifacts and caches
+clean:
+	@echo "Clearing generated files..."
+	rm -rf .coverage .mypy_cache .pytest_cache .ruff_cache build dist
+	find . -type d -name __pycache__ -prune -exec rm -rf {} +
+	@echo "done"
+	@echo
+
+####################
+### Tests
+####################
+
+.PHONY: test
+## Run tests with coverage
+test:
+	$(UV) run pytest --cov=sqlalchemy_multiple_db --cov-report=term-missing
+
+####################
+### Distribution
+####################
+
+.PHONY: build
+## Build source and wheel distributions
+build:
+	$(UV) build
+
+#################################################################################
+# SELF-DOCUMENTING COMMANDS                                                     #
+#################################################################################
 
 .DEFAULT_GOAL := help
 
-# Inspired by <http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html>
-# sed script explained:
-# /^##/:
-# 	* save line in hold space
-# 	* purge line
-# 	* Loop:
-# 		* append newline + line to hold space
-# 		* go to next line
-# 		* if line starts with doc comment, strip comment character off and loop
-# 	* remove target prerequisites
-# 	* append hold space (+ newline) to line
-# 	* replace newline plus comments by `---`
-# 	* print line
-# Separate expressions are necessary because labels cannot be delimited by
-# semicolon; see <http://stackoverflow.com/a/11799865/1968>
-.PHONY: help
+# Inspired by <https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html>
 help:
 	@echo "$$(tput bold)Available rules:$$(tput sgr0)"
 	@echo
