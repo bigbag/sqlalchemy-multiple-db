@@ -537,7 +537,7 @@ wheels = [
 
 [[package]]
 name = "sqlalchemy-multiple-db"
-version = "3.0.0"
+version = "3.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "sqlalchemy" },
