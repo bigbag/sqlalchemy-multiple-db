@@ -4,7 +4,7 @@ Explicit, typed SQLAlchemy 2.x session management for multiple named databases.
 
 ## Requirements
 
-- Python 3.11, 3.12, 3.13, or 3.14
+- Python 3.11, 3.12, 3.13, 3.14, or 3.15
 - SQLAlchemy 2.x (installed automatically)
 
 ## Installation
